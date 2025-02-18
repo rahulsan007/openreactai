@@ -52,7 +52,7 @@ export async function POST(req: Request) {
         model,
         messages: [
           { role: "system", content: screenshotToCodePrompt },
-          { role: "user", content: `Analyze this screenshot: ${screenshot}` }
+          { role: "user", content: `Analyze this screenshot: ${screenshot}` },
         ],
         temperature: 0.2,
       });
@@ -67,7 +67,7 @@ export async function POST(req: Request) {
         model,
         messages: [
           { role: "system", content: softwareArchitectPrompt },
-          { role: "user", content: enhancedPrompt }
+          { role: "user", content: enhancedPrompt },
         ],
         temperature: 0.2,
       });
@@ -82,7 +82,7 @@ export async function POST(req: Request) {
       messages: [
         { role: "system", content: getMainCodingPrompt(enhancedPrompt) },
         ...messages.slice(0, -1), // Include previous messages except the last one (already used)
-        { role: "user", content: enhancedPrompt + "\nReturn ONLY code, no marks or explanations." }
+        { role: "user", content: enhancedPrompt + "\nReturn ONLY code, no marks or explanations." },
       ],
       temperature: 0.2,
       stream: true,
@@ -95,7 +95,10 @@ export async function POST(req: Request) {
           for await (const chunk of completionStream) {
             const text = chunk.choices[0]?.delta?.content;
             if (text) {
-              controller.enqueue(text);
+              // Log each word individually as the text is received
+              // text.split(" ").forEach(word => console.log(word)); // Log word-by-word
+
+              controller.enqueue(text);  // Enqueue the chunk to the stream
             }
           }
         } catch (error) {
@@ -108,9 +111,8 @@ export async function POST(req: Request) {
     });
 
     return new Response(stream, {
-      headers: { "Content-Type": "text/event-stream" }
+      headers: { "Content-Type": "text/event-stream" },
     });
-
   } catch (error) {
     console.error("API Error:", error);
     return new Response(
