@@ -139,8 +139,8 @@ export async function createChat(
 export async function createMessage(
   chatId: string,
   text: string,
-  role: "user" | "system"
-): Promise<{ id: string; content: string; position: number; chatId: string }> {
+  role: "user" | "system" | "assistant"
+): Promise<{ id: string; content: string; position: number; chatId: string; createdAt: Date; role: string }> {
   const chat = await prisma.chat.findUnique({
     where: { id: chatId },
     include: { messages: true },
@@ -148,9 +148,10 @@ export async function createMessage(
 
   if (!chat) notFound();
 
-  const maxPosition = Math.max(...chat.messages.map((m) => m.position));
+  const maxPosition = Math.max(...chat.messages.map((m) => m.position), 0); // Handle empty case
 
   return await prisma.message.create({
     data: { role, content: text, position: maxPosition + 1, chatId },
+    select: { id: true, content: true, position: true, chatId: true, createdAt: true, role: true }, // Ensure createdAt and role are returned
   });
 }
