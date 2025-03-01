@@ -13,7 +13,7 @@ export default function Header() {
 
       <div className="absolute right-3">
         <a
-          href=""
+          href="https://github.com/rahulsan007/openreactai"
           target="_blank"
           className="ml-auto hidden items-center gap-3 rounded-2xl bg-gray-800 px-6 py-2 text-white shadow sm:flex hover:bg-gray-700 transition"
         >
