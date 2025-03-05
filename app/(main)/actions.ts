@@ -94,7 +94,7 @@ export async function createChat(
   let userMessage = prompt;
   if (quality === "high") {
     const initialRes = await openai.chat.completions.create({
-      model: "deepseek/deepseek-chat:free",
+      model: "meta-llama/llama-3.3-70b-instruct:free",
       messages: [
         { role: "system", content: softwareArchitectPrompt },
         {
