@@ -1,4 +1,4 @@
-import prisma from "@/lib/prisma";
+import { getPrisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { cache } from "react";
 import PageClient from "./page.client";
@@ -17,6 +17,7 @@ export default async function Page({
 }
 
 const getChatById = cache(async (id: string) => {
+  const prisma = getPrisma(); // Use getPrisma to get the Prisma client
   return await prisma.chat.findFirst({
     where: { id },
     include: { messages: { orderBy: { position: "asc" } } },
@@ -25,3 +26,6 @@ const getChatById = cache(async (id: string) => {
 
 export type Chat = NonNullable<Awaited<ReturnType<typeof getChatById>>>;
 export type Message = Chat["messages"][number];
+
+export const runtime = "edge";
+export const maxDuration = 45;

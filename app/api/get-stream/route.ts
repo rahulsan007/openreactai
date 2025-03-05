@@ -1,5 +1,5 @@
 import { z } from "zod";
-import prisma from "@/lib/prisma";
+import { getPrisma } from "@/lib/prisma";
 import { OpenAI } from "openai";
 
 const openai = new OpenAI({
@@ -9,6 +9,7 @@ const openai = new OpenAI({
 
 export async function POST(req: Request) {
   const { messageId, model } = await req.json();
+  const prisma = getPrisma(); // Use getPrisma to get the Prisma client
 
   const message = await prisma.message.findUnique({
     where: { id: messageId },
@@ -46,3 +47,6 @@ export async function POST(req: Request) {
 
   return new Response(res.toReadableStream());
 }
+
+export const runtime = "edge";
+export const maxDuration = 45;

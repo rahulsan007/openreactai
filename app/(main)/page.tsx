@@ -364,7 +364,7 @@ function LoadingMessage({
       <div className="flex flex-col items-center justify-center gap-2 text-gray-500">
         <span className="animate-pulse text-balance text-center text-sm md:text-base">
           {isHighQuality
-            ? `Coming up with project plan, may take 15 seconds...`
+            ? `Coming up with project, may take 15 seconds, As we are on Budget :)`
             : screenshotUrl
               ? "Analyzing your screenshot..."
               : `Creating your app...`}
@@ -375,3 +375,6 @@ function LoadingMessage({
     </div>
   );
 }
+
+export const runtime = "edge";
+export const maxDuration = 45;

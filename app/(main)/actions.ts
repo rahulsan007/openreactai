@@ -1,7 +1,6 @@
 "use server";
 
-
-import prisma from "@/lib/prisma";
+import { getPrisma } from "@/lib/prisma";
 import {
   getMainCodingPrompt,
   screenshotToCodePrompt,
@@ -15,13 +14,13 @@ const openai = new OpenAI({
   baseURL: process.env.LLM_BASE_URL!,
 });
 
-// ✅ Fix: Explicitly define types
 export async function createChat(
   prompt: string,
   model: string,
   quality: string,
   screenshotUrl?: string
 ): Promise<{ chatId: string; lastMessageId: string }> {
+  const prisma = getPrisma();
   const chat = await prisma.chat.create({
     data: {
       model,
@@ -32,7 +31,6 @@ export async function createChat(
     },
   });
 
-  // ✅ Fix: Ensure the title is properly handled
   async function fetchTitle(): Promise<string> {
     const responseForChatTitle = await openai.chat.completions.create({
       model: model,
@@ -96,10 +94,15 @@ export async function createChat(
   let userMessage = prompt;
   if (quality === "high") {
     const initialRes = await openai.chat.completions.create({
-      model: "cognitivecomputations/dolphin3.0-r1-mistral-24b:free",
+      model: "deepseek/deepseek-chat:free",
       messages: [
         { role: "system", content: softwareArchitectPrompt },
-        { role: "user", content: fullScreenshotDescription ? fullScreenshotDescription + prompt : prompt },
+        {
+          role: "user",
+          content: fullScreenshotDescription
+            ? fullScreenshotDescription + prompt
+            : prompt,
+        },
       ],
       temperature: 0.2,
       max_tokens: 3000,
@@ -117,7 +120,11 @@ export async function createChat(
       messages: {
         createMany: {
           data: [
-            { role: "system", content: getMainCodingPrompt(mostSimilarExample), position: 0 },
+            {
+              role: "system",
+              content: getMainCodingPrompt(mostSimilarExample),
+              position: 0,
+            },
             { role: "user", content: userMessage, position: 1 },
           ],
         },
@@ -126,7 +133,9 @@ export async function createChat(
     include: { messages: true },
   });
 
-  const lastMessage = newChat.messages.sort((a, b) => a.position - b.position).at(-1);
+  const lastMessage = newChat.messages
+    .sort((a, b) => a.position - b.position)
+    .at(-1);
   if (!lastMessage) throw new Error("No new message");
 
   return {
@@ -135,12 +144,19 @@ export async function createChat(
   };
 }
 
-// ✅ Fix: Explicitly define parameter types
 export async function createMessage(
   chatId: string,
   text: string,
   role: "user" | "system" | "assistant"
-): Promise<{ id: string; content: string; position: number; chatId: string; createdAt: Date; role: string }> {
+): Promise<{
+  id: string;
+  content: string;
+  position: number;
+  chatId: string;
+  createdAt: Date;
+  role: string;
+}> {
+  const prisma = getPrisma();
   const chat = await prisma.chat.findUnique({
     where: { id: chatId },
     include: { messages: true },
@@ -148,10 +164,20 @@ export async function createMessage(
 
   if (!chat) notFound();
 
-  const maxPosition = Math.max(...chat.messages.map((m) => m.position), 0); // Handle empty case
+  const maxPosition = Math.max(
+    ...chat.messages.map((m) => m.position),
+    0
+  );
 
   return await prisma.message.create({
     data: { role, content: text, position: maxPosition + 1, chatId },
-    select: { id: true, content: true, position: true, chatId: true, createdAt: true, role: true }, // Ensure createdAt and role are returned
+    select: {
+      id: true,
+      content: true,
+      position: true,
+      chatId: true,
+      createdAt: true,
+      role: true,
+    },
   });
 }
